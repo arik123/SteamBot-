@@ -122,6 +122,7 @@ std::unordered_map<std::string, std::string> loadenv(char * envp[]) {
         } while (!dotEnv.eof() && !dotEnv.bad() && dotEnv.fail());
         int i = line.find('=');
         if( i >= 0) {
+            if(line[line.length()-1] == '\r') line.resize(line.length()-1);
             env.insert({line.substr(0,i), std::string(line.c_str()+i+1)});
         }
     }

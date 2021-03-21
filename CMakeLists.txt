@@ -3,6 +3,10 @@ project(SteamBot)
 
 set(CMAKE_CXX_STANDARD 17)
 
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    add_compile_definitions(_DEBUG)
+endif ()
+
 find_package(OpenSSL REQUIRED)
 find_package(Boost 1.75.0 REQUIRED)
 
