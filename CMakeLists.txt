@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.17)
+project(SteamBot)
+
+set(CMAKE_CXX_STANDARD 17)
+
+find_package(OpenSSL REQUIRED)
+find_package(Boost 1.75.0 REQUIRED)
+
+add_executable(SteamBot main.cpp)
+
+add_subdirectory(lib/SteamPP)
+
+target_include_directories(SteamBot PRIVATE ${Boost_INCLUDE_DIR} http_parser)
+target_include_directories(SteamBot PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/certify/include>)
+
+TARGET_LINK_LIBRARIES(SteamBot PUBLIC ${Boost_LIBRARIES})
+target_link_libraries(SteamBot PRIVATE OpenSSL::SSL OpenSSL::Crypto steam++)
+IF (WIN32)
+    TARGET_LINK_LIBRARIES(SteamBot PRIVATE crypt32)
+ELSE()
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+ENDIF()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/.env ${CMAKE_CURRENT_BINARY_DIR}/.env COPYONLY)
