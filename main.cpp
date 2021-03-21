@@ -172,10 +172,10 @@ int main(int argc, char** argv, char* envp[]) {
 
     client.onHandshake = [&] {
         std::cout << "logging in \n";
-        std::string code = generateAuthCode(env.at("SHARED_SECRET"));
+        std::string code = generateAuthCode(env.at("STEAM_SHARED_SECRET"));
         const uint8_t* p_sentry = (sentry.length() > 0) ? reinterpret_cast<const uint8_t *>(sentry.c_str()) : nullptr;
         if(p_sentry != nullptr) std::cout << "using sentry\n";
-        client.LogOn(env.at("USERNAME").c_str(), env.at("PASSWORD").c_str(), p_sentry, code.data());
+        client.LogOn(env.at("STEAM_USERNAME").c_str(), env.at("STEAM_PASSWORD").c_str(), p_sentry, code.data());
     };
     client.onRelationships = [](bool incremental, std::map<Steam::SteamID, Steam::EFriendRelationship> &users, std::map<Steam::SteamID, Steam::EClanRelationship> &groups){
         std::cout << "a\n";
