@@ -22,6 +22,8 @@
 
 #include <openssl/hmac.h>
 
+#include "SteamApi.h"
+
 using net = boost::asio::ip::tcp;    // from <boost/asio.hpp>
 namespace ssl = boost::asio::ssl;
 namespace asio = boost::asio;    // from <boost/asio.hpp>
@@ -198,7 +200,7 @@ int main(int argc, char** argv, char* envp[]) {
         switch(result) {
             case Steam::EResult::OK:
                 std::cout << "logged on!" << std::endl;
-                client.SetPersonaState(Steam::EPersonaState::Online);
+                client.SetPersona(Steam::EPersonaState::Online, "Some new name");
                 //client.SetGamePlayed(440);
                 client.SetGamePlayed("Hello, I'm alive, using C++");
                 client.SendPrivateMessage(Steam::SteamID(76561198162885342), "I shall live once again.");
