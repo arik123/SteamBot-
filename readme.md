@@ -16,7 +16,8 @@ I recomend using vcpkg on windows
 - Protobuf
 - OpenSSL
 - Boost ASIO, BEAST
-- LibArchive\
+- LibArchive
+- RapidJSON
 ## Compilation
 You need CMAKE and working compiler\
 Tested with:
