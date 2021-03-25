@@ -8,16 +8,11 @@
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
-#include <boost/asio/read.hpp>
-#include <boost/asio/streambuf.hpp>
+#include "SteamApi.h"
 
 #include <boost/beast/core/detail/base64.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/beast/version.hpp>
+#include <boost/beast/http/message.hpp>
 
-#include <boost/certify/extensions.hpp>
 #include <boost/certify/https_verification.hpp>
 
 #include <openssl/hmac.h>
@@ -27,6 +22,7 @@
 using net = boost::asio::ip::tcp;    // from <boost/asio.hpp>
 namespace ssl = boost::asio::ssl;
 namespace asio = boost::asio;    // from <boost/asio.hpp>
+namespace http = boost::beast::http;
 
 std::string read_buffer;
 std::string write_buffer;
@@ -41,14 +37,14 @@ extern Steam::SteamClient client;
 
 void readHandle(boost::system::error_code error, std::size_t bytes_transferred){
     if (!error)
-    read_buffer.resize(client.readable(reinterpret_cast<const unsigned char*>(read_buffer.data())));
+        read_buffer.resize(client.readable(reinterpret_cast<const unsigned char*>(read_buffer.data())));
     sock->async_read_some(asio::buffer(read_buffer.data(), read_buffer.size()), readHandle);
 };
 void writeHandle(boost::system::error_code error, std::size_t bytes_transferred){
 };
 Steam::SteamClient client(
         // write callback
-        [](std::size_t length, std::function<void(unsigned char* buffer)> fill) {
+        [](std::size_t length, const std::function<void(unsigned char* buffer)>& fill) {
             // TODO: check if previous write has finished
             write_buffer.resize(length);
             fill(reinterpret_cast<unsigned char*>(&write_buffer[0]));
@@ -95,7 +91,7 @@ std::string generateAuthCode(const std::string &secret) {
     int b = out[19] & 0xF;
     int codePoint = (out[b] & 0x7F) << 24 | (out[b + 1] & 0xFF) << 16 | (out[b + 2] & 0xFF) << 8 | (out[b + 3] & 0xFF);
     const char * chars = "23456789BCDFGHJKMNPQRTVWXY";
-    std::string code = "";
+    std::string code;
     for (int i = 0; i < 5; i++) {
         code += chars[codePoint % strlen(chars)];
         codePoint /= strlen(chars);
@@ -131,6 +127,7 @@ std::unordered_map<std::string, std::string> loadenv(char * envp[]) {
     dotEnv.close();
     return env;
 }
+SteamApi * api;
 int main(int argc, char** argv, char* envp[]) {
 //    while(true) {
 //        std::string code = generateAuthCode("");
@@ -145,19 +142,16 @@ int main(int argc, char** argv, char* envp[]) {
         sentryIF >> sentry;
         sentryIF.close();
     }
-	
+    ssl::context ctx(ssl::context::tlsv12_client);
     try
     {
-        // The io_context is required for all I/O
-
-        // The SSL context is required, and holds certificates
-        ssl::context ctx(ssl::context::tlsv12_client);
-
         // This holds the root certificate used for verification
         ctx.set_verify_mode(ssl::context::verify_peer |
             ssl::context::verify_fail_if_no_peer_cert);
         ctx.set_default_verify_paths();
         boost::certify::enable_native_https_server_verification(ctx);
+
+        api = new SteamApi(asio::make_strand(ioc), ctx, "api.steampowered.com");
 
         net::resolver resolver(ioc);
         net::endpoint endp(asio::ip::address_v4(0xA2FEC683), 27017); // TODO: https://api.steampowered.com/ISteamDirectory/GetCMList/v1/?cellid=0
@@ -228,10 +222,20 @@ int main(int argc, char** argv, char* envp[]) {
         }
     };
 
-    client.onPrivateMsg = [](Steam::SteamID user, std::string message) {
+
+
+    client.onPrivateMsg = [&](Steam::SteamID user, const std::string& message) {
         std::cout << "message from: " << user.steamID64 << " " << message << '\n';
         if (message == "ping") {
-            client.SendPrivateMessage( user, "pong");
+            client.SendPrivateMessage(user, "pong");
+        } else if(message == "fetch") {
+            api->request("ISteamDirectory", "GetCMList", "v1", false,
+            {{"cellid", "0"}},
+            [&, user](http::response<http::string_body> resp){
+            	
+		            std::cout << resp << std::endl;
+		            client.SendPrivateMessage(user, "success ?");
+            });
         }
     };
 
@@ -242,5 +246,6 @@ int main(int argc, char** argv, char* envp[]) {
     if(steamPoller.joinable())
         steamPoller.join();
     run.join();
+    delete api;
     delete sock;
 }
