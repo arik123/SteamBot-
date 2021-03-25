@@ -16,7 +16,7 @@
 #include <boost/certify/https_verification.hpp>
 
 #include <openssl/hmac.h>
-
+#include "rapidjson/document.h"
 #include "SteamApi.h"
 
 using net = boost::asio::ip::tcp;    // from <boost/asio.hpp>
@@ -29,6 +29,7 @@ std::string write_buffer;
 net::socket * sock;
 std::thread steamPoller;
 asio::io_context ioc;
+rapidjson::Document document;
 
 bool running = true;
 
@@ -152,7 +153,23 @@ int main(int argc, char** argv, char* envp[]) {
         boost::certify::enable_native_https_server_verification(ctx);
 
         api = new SteamApi(asio::make_strand(ioc), ctx, "api.steampowered.com");
-
+        api->request("ISteamDirectory", "GetCMList", "v1", false,
+            { {"cellid", "0"} },
+            [](http::response<http::string_body> resp) {
+				if(resp[http::field::content_type].starts_with("application/json"))
+				{
+                    std::cout << "We have json :)\n";
+                    document.Parse(resp.body().c_str());
+                    for (auto& v : document["response"]["serverlist"].GetArray())
+                        std::cout << v.GetString() << '\n';
+				} else
+				{
+                    std::cout << "We dont have json :(\n";
+				}
+				//std::cout << resp.body() << std::endl;
+        });
+        ioc.run();
+    	return 0;
         net::resolver resolver(ioc);
         net::endpoint endp(asio::ip::address_v4(0xA2FEC683), 27017); // TODO: https://api.steampowered.com/ISteamDirectory/GetCMList/v1/?cellid=0
         sock = new net::socket(ioc);
