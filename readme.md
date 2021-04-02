@@ -10,6 +10,8 @@ It can:
 - generate auth codes using shared_secrets
 - it responds to chat message `ping`
 - if `_DEBUG` preprocessor definition is set, it will log all CMsg
+- send requests to steam API
+- pick lowest latency CM server and connect to it
 ## Requirements
 I recomend using vcpkg on windows
 - CryptoPP
@@ -23,5 +25,3 @@ You need CMAKE and working compiler\
 Tested with:
 - gcc 10.0.2 on linux
 - msvc 19.28 on windows
-
-

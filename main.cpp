@@ -153,28 +153,86 @@ int main(int argc, char** argv, char* envp[]) {
         boost::certify::enable_native_https_server_verification(ctx);
 
         api = new SteamApi(asio::make_strand(ioc), ctx, "api.steampowered.com");
-        api->request("ISteamDirectory", "GetCMList", "v1", false,
-            { {"cellid", "0"} },
-            [](http::response<http::string_body> resp) {
-				if(resp[http::field::content_type].starts_with("application/json"))
-				{
-                    std::cout << "We have json :)\n";
-                    document.Parse(resp.body().c_str());
-                    for (auto& v : document["response"]["serverlist"].GetArray())
-                        std::cout << v.GetString() << '\n';
-				} else
-				{
-                    std::cout << "We dont have json :(\n";
-				}
-				//std::cout << resp.body() << std::endl;
-        });
-        ioc.run();
-    	return 0;
+    //    api->request("ISteamDirectory", "GetCMList", "v1", false,
+    //        { {"cellid", "0"} },
+    //        [](http::response<http::string_body> resp) {
+				//if(resp[http::field::content_type].starts_with("application/json"))
+				//{
+    //                std::cout << "We have json :)\n";
+    //                document.Parse(resp.body().c_str());
+    //                for (auto& v : document["response"]["serverlist"].GetArray()) //TODO: process in api class
+    //                    std::cout << v.GetString() << '\n';
+				//} else
+				//{
+    //                std::cout << "We dont have json :(\n";
+				//}
+				////std::cout << resp.body() << std::endl;
+    //    });
         net::resolver resolver(ioc);
-        net::endpoint endp(asio::ip::address_v4(0xA2FEC683), 27017); // TODO: https://api.steampowered.com/ISteamDirectory/GetCMList/v1/?cellid=0
         sock = new net::socket(ioc);
-        sock->connect(endp);
-        read_buffer.resize(client.connected());
+        std::string cellid("0");
+        std::ifstream ifile("cellid.txt");
+        if (ifile.is_open())
+        {
+            ifile >> cellid;
+            ifile.close();
+        }
+        api->GetCMList(cellid, [](std::vector<net::endpoint> serverList)
+        {
+            uint64_t min = std::numeric_limits<uint64_t>::max(), index, i=0;
+            for (const auto& server : serverList)
+            {
+                try
+                {
+                    std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
+                    
+                    sock->connect(server);
+                	
+                    std::chrono::system_clock::time_point tp2 = std::chrono::system_clock::now();
+                	
+					std::chrono::system_clock::duration dtn = tp2-tp;
+                    uint64_t now = std::chrono::duration_cast<std::chrono::microseconds>(dtn).count();
+                	if(now < min)
+                	{
+                        min = now;
+                		index = i;
+                	}
+                    sock->shutdown(net::socket::shutdown_both);
+                    sock->close();
+                }
+                catch (const std::exception& e)
+                {
+                }
+                i++;
+            }
+            std::cout << "Connecting to: " << serverList[index].address() << ':' << serverList[index].port() << " with ping " << min << " us\n";
+            try
+            {
+                sock->connect(serverList[index]);
+                read_buffer.resize(client.connected());
+                return;
+            }
+            catch (const std::exception& e) {}
+        	// in case something broke, go back to picking first in list
+	        for(const auto& server : serverList)
+	        {
+                std::cout << "Connecting to: " << server.address() << ':' << server.port() << '\n';
+		        try
+		        {
+                    sock->connect(server);
+                    read_buffer.resize(client.connected());
+                    break;
+		        }
+		        catch (const std::exception& e)
+		        {
+                    continue;
+		        }
+                std::cout << server << '\n';
+	        }
+            
+        });
+        
+        
 
         sock->async_read_some(asio::buffer(read_buffer.data(), read_buffer.size()), readHandle);
     }
@@ -207,14 +265,28 @@ int main(int argc, char** argv, char* envp[]) {
         myfile.close();
     };
 
-    client.onLogOn = [](Steam::EResult result, Steam::SteamID steamID) {
+    client.onLogOn = [&env](Steam::EResult result, Steam::SteamID steamID, uint32_t cellid) {
         switch(result) {
             case Steam::EResult::OK:
-                std::cout << "logged on!" << std::endl;
-                client.SetPersona(Steam::EPersonaState::Online, "Some new name");
-                //client.SetGamePlayed(440);
-                client.SetGamePlayed("Hello, I'm alive, using C++");
-                client.SendPrivateMessage(Steam::SteamID(76561198162885342), "I shall live once again.");
+				{
+	                std::cout << "logged on!" << std::endl;
+	                client.SetPersona(Steam::EPersonaState::Online, "Some new name");
+		            
+	                    std::ofstream myfile("cellid.txt");
+	                    if (!myfile.is_open())
+	                    {
+	                        std::cout << "could not save sentry\n";
+	                    }
+	                    else
+	                    {
+	                        myfile << cellid;
+	                        myfile.close();
+	                    }
+		            
+	                client.SetGamePlayed(440);
+	                client.SetGamePlayed("Hello, I'm alive, using C++");
+	                client.SendPrivateMessage(Steam::SteamID(76561198162885342), "I shall live once again.");
+                }
                 break;
             case Steam::EResult::InvalidPassword:
                 std::cout << "Wrong password!\n";
@@ -238,8 +310,6 @@ int main(int argc, char** argv, char* envp[]) {
             ioc.stop();
         }
     };
-
-
 
     client.onPrivateMsg = [&](Steam::SteamID user, const std::string& message) {
         std::cout << "message from: " << user.steamID64 << " " << message << '\n';
