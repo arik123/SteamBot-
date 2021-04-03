@@ -12,9 +12,8 @@
 #include <boost/beast/version.hpp>
 #include <boost/asio/strand.hpp>
 
-#include <boost/certify/extensions.hpp>
 #include <boost/certify/https_verification.hpp>
-#include "ApiRequest.h"
+#include "WebRequest.h"
 #include "rapidjson/document.h"
 
 namespace asio = boost::asio;    // from <boost/asio.hpp>
@@ -31,13 +30,13 @@ class SteamApi {
 	http::request<http::empty_body> req_;
 	http::response<http::string_body> res_;
 	const std::string host;
-	ApiRequest* p_apiRequest = nullptr;
+	WebRequest* p_apiRequest = nullptr;
+	
+	void shutdown();
 public:
 	SteamApi(const asio::any_io_executor& ex, ssl::context& ctx, std::string host);
-	static std::string urlEncode(const std::string& SRC);
 	// Start the asynchronous operation
-	void request(char const* interface, char const* method, char const* version, bool post, const std::unordered_map<std::string, std::string>& data, const std::function<void(http::response<http::string_body>)>& callback);
-	void shutdown();
+	void request(char const* interface, char const* method, char const* version, bool post, const std::unordered_map<std::string, std::string>& data, const std::function<void(http::response<http::string_body>&)>& callback);
 	void GetCMList(const std::string& cellid, const std::function<void(std::vector<net::endpoint> serverList)>& callback);
 };
 

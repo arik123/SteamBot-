@@ -9,6 +9,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include "SteamApi.h"
+#include "SteamCommunity.h"
 
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/beast/http/message.hpp>
@@ -138,6 +139,7 @@ int main(int argc, char** argv, char* envp[]) {
     auto env = loadenv(envp);
     std::ifstream sentryIF("sentry.txt");
     std::string sentry;
+    uint64_t token = 0;
     if (sentryIF.is_open())
     {
         sentryIF >> sentry;
@@ -326,6 +328,15 @@ int main(int argc, char** argv, char* envp[]) {
         }
     };
 
+	client.onSessionToken = [&token](uint64_t tokenParam)
+	{
+        token = tokenParam;
+#ifdef _DEBUG
+        std::cout << "saved session token " << tokenParam << '\n';
+#endif
+
+	}
+	
     std::thread run([&]() {ioc.run(); });
     std::getchar();
     running = false;

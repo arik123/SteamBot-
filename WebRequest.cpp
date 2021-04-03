@@ -2,9 +2,12 @@
 // Created by Max on 23. 3. 2021.
 //
 
-#include "ApiRequest.h"
+#include "WebRequest.h"
 
-void ApiRequest::on_read(beast::error_code ec, std::size_t bytes_transferred) {
+#include <utility>
+#include "utils.h"
+
+void WebRequest::on_read(beast::error_code ec, std::size_t bytes_transferred) {
     boost::ignore_unused(bytes_transferred);
 
     if (ec)
@@ -19,7 +22,7 @@ void ApiRequest::on_read(beast::error_code ec, std::size_t bytes_transferred) {
     stream_.async_shutdown([&](beast::error_code ec){on_shutdown(ec);});
 }
 
-void ApiRequest::on_shutdown(beast::error_code ec) {
+void WebRequest::on_shutdown(beast::error_code ec) {
     if (ec == asio::error::eof) {
         // Rationale:
         // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
@@ -32,7 +35,7 @@ void ApiRequest::on_shutdown(beast::error_code ec) {
     shutdown_cb();
 }
 
-void ApiRequest::on_write(beast::error_code ec, std::size_t bytes_transferred) {
+void WebRequest::on_write(beast::error_code ec, std::size_t bytes_transferred) {
     boost::ignore_unused(bytes_transferred);
 
     if (ec)
@@ -42,7 +45,7 @@ void ApiRequest::on_write(beast::error_code ec, std::size_t bytes_transferred) {
     http::async_read(stream_, buffer_, res_, [&](beast::error_code ec, std::size_t bt){on_read(ec, bt);});
 }
 
-void ApiRequest::on_handshake(beast::error_code ec) {
+void WebRequest::on_handshake(beast::error_code ec) {
     if (ec)
         return fail(ec, "handshake");
 
@@ -53,7 +56,7 @@ void ApiRequest::on_handshake(beast::error_code ec) {
     http::async_write(stream_, req_, [&](beast::error_code ec, std::size_t bt){on_write(ec, bt);});
 }
 
-void ApiRequest::on_connect(beast::error_code ec, const asio::ip::basic_endpoint<asio::ip::tcp> &) {
+void WebRequest::on_connect(beast::error_code ec, const asio::ip::basic_endpoint<asio::ip::tcp> &) {
     if (ec)
         return fail(ec, "connect");
 
@@ -61,7 +64,7 @@ void ApiRequest::on_connect(beast::error_code ec, const asio::ip::basic_endpoint
     stream_.async_handshake(ssl::stream_base::client,[&](beast::error_code ec){on_handshake(ec);});
 }
 
-void ApiRequest::on_resolve(beast::error_code ec,
+void WebRequest::on_resolve(beast::error_code ec,
                             const asio::ip::basic_resolver<asio::ip::tcp, asio::any_io_executor>::results_type &results) {
     if (ec)
         return fail(ec, "resolve");
@@ -79,10 +82,10 @@ void ApiRequest::on_resolve(beast::error_code ec,
                                                    [&](beast::error_code ec, const net::resolver::results_type::endpoint_type& et){on_connect(ec, et);});
 }
 
-ApiRequest::ApiRequest(asio::any_io_executor ex, ssl::context &ctx, std::string host, std::string endpoint,
+WebRequest::WebRequest(asio::any_io_executor ex, ssl::context &ctx, std::string host, std::string endpoint,
                        http::request<http::empty_body> req,
-                       std::function<void(http::response<http::string_body>)> callback,
+                       const std::function<void(http::response<http::string_body>&)> callback,
                        std::function<void()> shutdown_cb)
         : stream_(ex, ctx), host(std::move(host)), endpoint(std::move(endpoint)), callback(std::move(callback)), shutdown_cb(std::move(shutdown_cb)){
-    req_ = req;
+    req_ = std::move(req);
 }

@@ -3,6 +3,7 @@
 //
 
 #include "SteamApi.h"
+#include "utils.h"
 
 void SteamApi::GetCMList(const std::string &cellid, const std::function<void(std::vector < net::endpoint > )> &callback) {
     request("ISteamDirectory", "GetCMList", "v1", false,
@@ -31,7 +32,7 @@ void SteamApi::GetCMList(const std::string &cellid, const std::function<void(std
 
 void SteamApi::request(const char *interface, const char *method, const char *version, bool post,
                        const std::unordered_map <std::string, std::string> &data,
-                       const std::function<void(http::response < http::string_body > )> &callback) {
+                       const std::function<void(http::response < http::string_body >&)> &callback) {
     // Set SNI Hostname (many hosts need this to handshake successfully)
     std::string endpoint = "/";
     endpoint += interface;
@@ -39,7 +40,7 @@ void SteamApi::request(const char *interface, const char *method, const char *ve
     endpoint += method;
     endpoint += '/';
     endpoint += version;
-    if (!data.empty()) {
+    if (!data.empty() && !post) {
         endpoint += '?';
         auto iter = data.begin();
         while (true) {
@@ -58,29 +59,9 @@ void SteamApi::request(const char *interface, const char *method, const char *ve
     req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     req_.set(http::field::accept, "*/*");
     req_.version(10);
-    p_apiRequest = new ApiRequest(ex, ctx, host, endpoint, req_, callback, [&]() {shutdown(); });
+    p_apiRequest = new WebRequest(ex, ctx, host, endpoint, req_, callback, [&]() {shutdown(); });
     // Look up the domain name
     resolver_.async_resolve(host, "443", [&](beast::error_code ec, const net::resolver::results_type& results) {p_apiRequest->on_resolve(ec, results); });
-}
-
-std::string SteamApi::urlEncode(const std::string &SRC) {
-    std::string ret;
-    ret.reserve(SRC.size());
-    for (std::string::const_iterator iter = SRC.begin(); iter != SRC.end(); ++iter) {
-        std::string::value_type c = (*iter);
-
-        // Keep alphanumeric and other accepted characters intact
-        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
-            ret += c;
-            continue;
-        }
-
-        // Any other characters are percent-encoded
-        char buff[4];
-        sprintf(buff, "%%%02X", c);
-        ret += buff;
-    }
-    return ret;
 }
 
 SteamApi::SteamApi(const asio::any_io_executor &ex, ssl::context &ctx, std::string host)
