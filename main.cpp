@@ -328,14 +328,14 @@ int main(int argc, char** argv, char* envp[]) {
         }
     };
 
-	client.onSessionToken = [&token](uint64_t tokenParam)
-	{
+    client.onSessionToken = [&token](uint64_t tokenParam)
+    {
         token = tokenParam;
 #ifdef _DEBUG
         std::cout << "saved session token " << tokenParam << '\n';
 #endif
 
-	}
+    };
 	
     std::thread run([&]() {ioc.run(); });
     std::getchar();

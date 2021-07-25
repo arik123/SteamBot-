@@ -29,14 +29,15 @@ class SteamCommunity {
 	asio::any_io_executor ex;
 	ssl::context& ctx;
 	beast::flat_buffer buffer_; // (Must persist between reads)
-	http::request<http::empty_body> req_;
+	http::request<http::string_body> req_;
 	http::response<http::string_body> res_;
 	const std::string host;
 	WebRequest* p_apiRequest = nullptr;
 	void shutdown();
 public:
 	SteamCommunity(const asio::any_io_executor& ex, ssl::context& ctx, std::string host);
-    void request(std::string endpoint, bool post, const std::unordered_map<std::string, std::string>& data, const std::function<void(http::response <boost::beast::http::string_body >)>& callback);
+    void request(std::string endpoint, bool post, const std::unordered_map<std::string, std::string>& data, std::string referer, const std::function<void(http::response <boost::beast::http::string_body >)>& callback);
+	void getUserInventory(uint64_t steamid, uint32_t appid, uint32_t contextID, bool tradableOnly, std::string language, std::function<void()> callback);
 };
 
 

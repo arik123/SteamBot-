@@ -83,7 +83,7 @@ void WebRequest::on_resolve(beast::error_code ec,
 }
 
 WebRequest::WebRequest(asio::any_io_executor ex, ssl::context &ctx, std::string host, std::string endpoint,
-                       http::request<http::empty_body> req,
+                       http::request<http::string_body> req,
                        const std::function<void(http::response<http::string_body>&)> callback,
                        std::function<void()> shutdown_cb)
         : stream_(ex, ctx), host(std::move(host)), endpoint(std::move(endpoint)), callback(std::move(callback)), shutdown_cb(std::move(shutdown_cb)){

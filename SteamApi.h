@@ -27,7 +27,7 @@ class SteamApi {
 	asio::any_io_executor ex;
 	ssl::context& ctx;
 	beast::flat_buffer buffer_; // (Must persist between reads)
-	http::request<http::empty_body> req_;
+	http::request<http::string_body> req_;
 	http::response<http::string_body> res_;
 	const std::string host;
 	WebRequest* p_apiRequest = nullptr;
