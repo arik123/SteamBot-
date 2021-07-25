@@ -130,6 +130,7 @@ std::unordered_map<std::string, std::string> loadenv(char * envp[]) {
     return env;
 }
 SteamApi * api;
+SteamCommunity * community;
 int main(int argc, char** argv, char* envp[]) {
 //    while(true) {
 //        std::string code = generateAuthCode("");
@@ -155,21 +156,6 @@ int main(int argc, char** argv, char* envp[]) {
         boost::certify::enable_native_https_server_verification(ctx);
 
         api = new SteamApi(asio::make_strand(ioc), ctx, "api.steampowered.com");
-    //    api->request("ISteamDirectory", "GetCMList", "v1", false,
-    //        { {"cellid", "0"} },
-    //        [](http::response<http::string_body> resp) {
-				//if(resp[http::field::content_type].starts_with("application/json"))
-				//{
-    //                std::cout << "We have json :)\n";
-    //                document.Parse(resp.body().c_str());
-    //                for (auto& v : document["response"]["serverlist"].GetArray()) //TODO: process in api class
-    //                    std::cout << v.GetString() << '\n';
-				//} else
-				//{
-    //                std::cout << "We dont have json :(\n";
-				//}
-				////std::cout << resp.body() << std::endl;
-    //    });
         net::resolver resolver(ioc);
         sock = new net::socket(ioc);
         std::string cellid("0");
@@ -240,9 +226,12 @@ int main(int argc, char** argv, char* envp[]) {
     }
     catch (std::exception const& e)
     {
+        delete api;
         std::cerr << "Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+
+    community = new SteamCommunity(asio::make_strand(ioc), ctx, "steamcommunity.com");
 
     client.onHandshake = [&] {
         std::cout << "logging in \n";
@@ -324,6 +313,10 @@ int main(int argc, char** argv, char* envp[]) {
             	
 		            std::cout << resp << std::endl;
 		            client.SendPrivateMessage(user, "success ?");
+            });
+        } else if (message == "inv") {
+            community->getUserInventory(76561198162885342, 440, 2, [](){
+                std::cout << "callback called in main\n";
             });
         }
     };

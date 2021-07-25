@@ -36,9 +36,18 @@ class SteamCommunity {
 	void shutdown();
 public:
 	SteamCommunity(const asio::any_io_executor& ex, ssl::context& ctx, std::string host);
-    void request(std::string endpoint, bool post, const std::unordered_map<std::string, std::string>& data, std::string referer, const std::function<void(http::response <boost::beast::http::string_body >)>& callback);
-	void getUserInventory(uint64_t steamid, uint32_t appid, uint32_t contextID, bool tradableOnly, std::string language, std::function<void()> callback);
+    void request(std::string endpoint, bool post, const std::unordered_map<std::string, std::string>& data, std::string referer, const std::function<void(http::response <boost::beast::http::string_body >&)>& callback);
+	void getUserInventory(uint64_t steamid, uint32_t appid, uint32_t contextID, const std::function<void()>& callback, const std::string& language = "english", const std::string& start = "");
 };
 
+struct InventoryItem {
+    uint32_t appid;
+    uint32_t contextid;
+    uint64_t assetid;
+    uint64_t classid;
+    uint64_t instanceid;
+    int32_t amount;
+    // TODO: add other parameters
+};
 
 #endif //STEAMBOT_STEAMCOMMUNITY_H
