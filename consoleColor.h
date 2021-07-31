@@ -5,9 +5,6 @@
 #ifndef STEAMBOT_CONSOLECOLOR_H
 #define STEAMBOT_CONSOLECOLOR_H
 #include <iostream>
-#ifdef WIN32
-#include <WinCon.h>
-#endif
 
 enum class colorFG {
     Black = 30,

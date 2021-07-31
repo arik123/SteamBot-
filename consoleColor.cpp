@@ -1,6 +1,8 @@
 //
 // Created by Max on 31. 7. 2021.
 //
+#include <string>
+#include "consoleColor.h"
 
 std::ostream& operator<<(std::ostream& os, const color& color)
 {
