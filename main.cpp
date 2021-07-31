@@ -19,6 +19,12 @@
 #include <openssl/hmac.h>
 #include "rapidjson/document.h"
 #include "SteamApi.h"
+#include "consoleColor.h"
+#include "CustomEMsgHandler.h"
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 using net = boost::asio::ip::tcp;    // from <boost/asio.hpp>
 namespace ssl = boost::asio::ssl;
@@ -129,6 +135,58 @@ std::unordered_map<std::string, std::string> loadenv(char * envp[]) {
     dotEnv.close();
     return env;
 }
+int setupConsole() {
+#ifdef WIN32
+    // https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences#samples
+    // Set output mode to handle virtual terminal sequences
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+    if (hIn == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    DWORD dwOriginalOutMode = 0;
+    DWORD dwOriginalInMode = 0;
+    if (!GetConsoleMode(hOut, &dwOriginalOutMode))
+    {
+        return false;
+    }
+    if (!GetConsoleMode(hIn, &dwOriginalInMode))
+    {
+        return false;
+    }
+
+    DWORD dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
+    DWORD dwRequestedInModes = ENABLE_VIRTUAL_TERMINAL_INPUT;
+
+    DWORD dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
+    if (!SetConsoleMode(hOut, dwOutMode))
+    {
+        // we failed to set both modes, try to step down mode gracefully.
+        dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
+        if (!SetConsoleMode(hOut, dwOutMode))
+        {
+            // Failed to set any VT mode, can't do anything here.
+            return -1;
+        }
+    }
+
+    DWORD dwInMode = dwOriginalInMode | ENABLE_VIRTUAL_TERMINAL_INPUT;
+    if (!SetConsoleMode(hIn, dwInMode))
+    {
+        // Failed to set VT input mode, can't do anything here.
+        return -1;
+    }
+
+    return 0;
+#endif
+}
 SteamApi * api;
 SteamCommunity * community;
 int main(int argc, char** argv, char* envp[]) {
@@ -137,6 +195,8 @@ int main(int argc, char** argv, char* envp[]) {
 //        std::cout << code << '\n';
 //        std::this_thread::sleep_for(std::chrono::seconds(1));
 //    }
+    setupConsole();
+    std::cout << color(colorFG::Green) << "Starting" << color();
     auto env = loadenv(envp);
     std::ifstream sentryIF("sentry.txt");
     std::string sentry;
@@ -329,7 +389,7 @@ int main(int argc, char** argv, char* envp[]) {
 #endif
 
     };
-	
+	client.defaultHandler = emsgHandler;
     std::thread run([&]() {ioc.run(); });
     std::getchar();
     running = false;
