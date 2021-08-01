@@ -12,6 +12,8 @@ It can:
 - if `_DEBUG` preprocessor definition is set, it will log all CMsg
 - send requests to steam API
 - pick lowest latency CM server and connect to it
+- fetch and parse inventory
+- **WIP** send tradeoffers
 ## Requirements
 I recomend using vcpkg on windows
 - CryptoPP
