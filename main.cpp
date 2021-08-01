@@ -184,9 +184,8 @@ int setupConsole() {
         // Failed to set VT input mode, can't do anything here.
         return -1;
     }
-
-    return 0;
 #endif
+    return 0;
 }
 SteamApi * api;
 SteamCommunity * community;
@@ -372,24 +371,40 @@ int main(int argc, char** argv, char* envp[]) {
             api->request("ISteamDirectory", "GetCMList", "v1", false,
             {{"cellid", "0"}},
             [&, user](http::response<http::string_body> resp){
-            	
+
 		            std::cout << resp << std::endl;
 		            client.SendPrivateMessage(user, "success ?");
             });
-        } else if (message == "inv") {
-            community->getUserInventory(76561198162885342, 440, 2, [](const std::vector<SteamCommunity::InventoryItem>& inv ){
-                std::cout << "callback called in main\n";
-            });
         } else if (message == "myinv") {
+            community->getUserInventory(user.steamID64, 440, 2, [user](const std::vector<SteamCommunity::InventoryItem>& inv ){
+                std::string message = "your inventory contains ";
+                message += std::to_string(inv.size());
+                message += " items";
+
+                client.SendPrivateMessage(user, message.c_str());
+            });
+        } else if (message == "youinv") {
             community->getUserInventory(mySteamID, 440, 2, [](const std::vector<SteamCommunity::InventoryItem>& inv){
                 std::cout << "callback called in main\n";
+            });
+        } else if (message == "getItem") {
+            community->getUserInventory(mySteamID, 440, 2, [user](const std::vector<SteamCommunity::InventoryItem>& inv){
+                SteamCommunity::InventoryItem chosenItem;
+                for(const auto & item : inv) {
+                    if(!item.tradable) continue;
+                    chosenItem = item;
+                    break;
+                }
+                TradeOffer offer(user.steamID64);
+                offer.addOurItem(chosenItem);
+                offer.send(*community);
             });
         }
     };
 
-    client.onSessionToken = [&token](uint64_t tokenParam)
+    client.onSessionToken = [](uint64_t tokenParam)
     {
-        token = tokenParam;
+        community->sessionToken = std::to_string(tokenParam);
 #ifdef _DEBUG
         std::cout << "saved session token " << tokenParam << '\n';
 #endif

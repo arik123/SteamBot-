@@ -9,13 +9,14 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "SteamCommunity.h"
 
 class TradeOffer {
 public:
     struct OfferAsset {
-        uint64_t appid;
+        uint32_t appid;
         uint64_t contextid;
-        uint64_t amount;
+        uint32_t amount;
         uint64_t assetid;
     };
 private:
@@ -24,14 +25,17 @@ private:
     std::vector<OfferAsset> ourItems;
     std::vector<OfferAsset> theirItems;
 public:
-    explicit TradeOffer(uint64_t partner, const std::string& token = "");
+    std::string message;
+    explicit TradeOffer(uint64_t partner, std::string  token = "");
     void addOurItem(OfferAsset & item);
+    void addOurItem(SteamCommunity::InventoryItem & item, uint32_t count = 1);
     void addTheirItem(OfferAsset & item);
+    void addTheirItem(SteamCommunity::InventoryItem & item, uint32_t count = 1);
     /**
      *
      * @return success
      */
-    bool send();
+    bool send(SteamCommunity & community);
 };
 
 
