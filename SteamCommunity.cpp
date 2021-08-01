@@ -4,6 +4,8 @@
 
 #include "SteamCommunity.h"
 #include "utils.h"
+#include "rapidjson/ostreamwrapper.h"
+#include "rapidjson/writer.h"
 SteamCommunity::SteamCommunity(const asio::any_io_executor& ex, ssl::context& ctx, std::string host)
     : resolver_(ex), ex(ex), ctx(ctx), host(std::move(host)) {
 }
@@ -56,7 +58,10 @@ void SteamCommunity::request(std::string endpoint, bool post,
 void SteamCommunity::shutdown() {
     delete this->p_apiRequest;
 }
-void SteamCommunity::getUserInventory(uint64_t steamid, uint32_t appID, uint32_t contextID, const std::function<void()>& callback, const std::string& language, const std::string& start)
+
+void SteamCommunity::getUserInventory(uint64_t steamid, uint32_t appID, uint32_t contextID,
+                                      const std::function<void(std::vector<InventoryItem>&)>& callback,
+                                      const std::string& language, const std::string& start)
 {
     std::string endpoint("/inventory/");
     endpoint += std::to_string(steamid);
@@ -72,19 +77,41 @@ void SteamCommunity::getUserInventory(uint64_t steamid, uint32_t appID, uint32_t
             false, params,
             "",
             [callback](http::response < http::string_body >& resp) {
+            std::vector<InventoryItem> inventory;
             std::cout << "inventory responded\n";
             if (resp[http::field::content_type].starts_with("application/json"))
             {
+                //TODO handle more than 5000 items
                 rapidjson::Document document;
                 document.Parse(resp.body().data());
                 std::cout << "Success " << document["success"].GetInt();
                 std::cout << ", Count " << document["total_inventory_count"].GetInt() << '\n';
-                //TODO: finish parsing
+                for (rapidjson::Value::ConstValueIterator itr = document["assets"].Begin(); itr != document["assets"].End(); ++itr) {
+                //for(int i = 0; i < document["assets"].GetArray().Size(); i++) {
+                    //rapidjson::OStreamWrapper out(std::cout);
+                    //rapidjson::Writer<rapidjson::OStreamWrapper> writer(out);
+                    //itr->Accept(writer);
+                    //std::cout << '\n';
+                    InventoryItem item;
+                    item.assetid = std::stoull(itr->operator[]("assetid").GetString());
+                    item.amount = std::stoull(itr->operator[]("amount").GetString());
+                    item.appid = itr->operator[]("appid").GetUint64();
+                    item.classid = std::stoull(itr->operator[]("classid").GetString());
+                    for (rapidjson::Value::ConstValueIterator itr2 = document["descriptions"].Begin(); itr2 != document["descriptions"].End(); ++itr2) {
+                    //for(int j = 0; j < document["descriptions"].GetArray().Size(); j++) {
+                        if(std::stoull(itr2->operator[]("classid").GetString()) != item.classid) continue;
+                        item.name = itr2->operator[]("name").GetString();
+                        item.marketable = itr2->operator[]("marketable").GetInt();
+                        item.tradable = itr2->operator[]("tradable").GetInt();
+                        break;
+                    }
+                    inventory.push_back(item);
+                }
+                callback(inventory);
             }
             else
             {
-                callback();
+                callback(inventory);
             }
-            callback();
         });
 }

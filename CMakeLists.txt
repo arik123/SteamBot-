@@ -13,7 +13,7 @@ endif ()
 find_package(OpenSSL REQUIRED)
 find_package(Boost 1.75.0 REQUIRED)
 
-add_executable(SteamBot main.cpp SteamApi.cpp WebRequest.cpp utils.cpp SteamCommunity.cpp CustomEMsgHandler.cpp consoleColor.cpp)
+add_executable(SteamBot main.cpp SteamApi.cpp WebRequest.cpp utils.cpp SteamCommunity.cpp CustomEMsgHandler.cpp consoleColor.cpp TradeOffer.cpp TradeOffer.h)
 
 add_subdirectory(lib/SteamPP)
 

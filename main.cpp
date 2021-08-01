@@ -21,6 +21,7 @@
 #include "SteamApi.h"
 #include "consoleColor.h"
 #include "CustomEMsgHandler.h"
+#include "TradeOffer.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -315,12 +316,13 @@ int main(int argc, char** argv, char* envp[]) {
         myfile << sentry;
         myfile.close();
     };
-
-    client.onLogOn = [&env](Steam::EResult result, Steam::SteamID steamID, uint32_t cellid) {
+    uint64_t mySteamID;
+    client.onLogOn = [&env, &mySteamID](Steam::EResult result, Steam::SteamID steamID, uint32_t cellid) {
         switch(result) {
             case Steam::EResult::OK:
 				{
 	                std::cout << "logged on!" << std::endl;
+	                mySteamID = steamID.steamID64;
 	                client.SetPersona(Steam::EPersonaState::Online, "Some new name");
 		            
 	                    std::ofstream myfile("cellid.txt");
@@ -375,7 +377,11 @@ int main(int argc, char** argv, char* envp[]) {
 		            client.SendPrivateMessage(user, "success ?");
             });
         } else if (message == "inv") {
-            community->getUserInventory(76561198162885342, 440, 2, [](){
+            community->getUserInventory(76561198162885342, 440, 2, [](const std::vector<SteamCommunity::InventoryItem>& inv ){
+                std::cout << "callback called in main\n";
+            });
+        } else if (message == "myinv") {
+            community->getUserInventory(mySteamID, 440, 2, [](const std::vector<SteamCommunity::InventoryItem>& inv){
                 std::cout << "callback called in main\n";
             });
         }
