@@ -13,7 +13,7 @@ bool TradeOffer::send(SteamCommunity & community) {
     rapidjson::Document params;
     params.SetObject();
     if (!token.empty())
-        params.AddMember("trade_offer_access_token", token, params.GetAllocator());
+        params.AddMember("trade_offer_access_token", token, params.GetAllocator()); //TODO FIX - COMPILE ERROR
     rapidjson::OStreamWrapper offerStream (offerParams);
     rapidjson::Writer<rapidjson::OStreamWrapper> writer(offerStream);
     params.Accept(writer);
