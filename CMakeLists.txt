@@ -10,14 +10,18 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     endif()
 endif ()
 
+add_compile_definitions(RAPIDJSON_HAS_STDSTRING=1)
+
 find_package(OpenSSL REQUIRED)
 find_package(Boost 1.75.0 REQUIRED)
+find_package(RapidJSON REQUIRED)
 
 add_executable(SteamBot main.cpp SteamApi.cpp WebRequest.cpp utils.cpp SteamCommunity.cpp CustomEMsgHandler.cpp consoleColor.cpp TradeOffer.cpp TradeOffer.h)
 
 add_subdirectory(lib/SteamPP)
 
 target_include_directories(SteamBot PRIVATE ${Boost_INCLUDE_DIR} http_parser)
+target_include_directories(SteamBot PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
 target_include_directories(SteamBot PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/certify/include>)
 target_include_directories(SteamBot PRIVATE ${PROTOBUFS_DIR})
 TARGET_LINK_LIBRARIES(SteamBot PUBLIC ${Boost_LIBRARIES})

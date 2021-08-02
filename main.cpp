@@ -137,6 +137,7 @@ std::unordered_map<std::string, std::string> loadenv(char * envp[]) {
     return env;
 }
 int setupConsole() {
+    std::ios::sync_with_stdio(true);
 #ifdef WIN32
     // https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences#samples
     // Set output mode to handle virtual terminal sequences

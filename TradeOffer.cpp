@@ -40,7 +40,13 @@ bool TradeOffer::send(SteamCommunity & community) {
         someside.AddMember("ready", false, data.GetAllocator());
         rapidjson::Value assets;
         assets.SetArray();
-        for(const auto & item : ourItems ) {
+        std::vector<OfferAsset> * items;
+        if(strcmp(side, "me") == 0) {
+            items = &ourItems;
+        } else {
+            items = &theirItems;
+        }
+        for(const auto & item : *items ) {
             rapidjson::Value asset;
             asset.SetObject();
             asset.AddMember("appid", std::to_string(item.appid), data.GetAllocator());
@@ -55,7 +61,7 @@ bool TradeOffer::send(SteamCommunity & community) {
     }
     rapidjson::OStreamWrapper dataStream (offerData);
     rapidjson::Writer<rapidjson::OStreamWrapper> writer2(dataStream);
-    params.Accept(writer2);
+    data.Accept(writer2);
     std::cout << offerData.str() << '\n';
     return false;
     /*

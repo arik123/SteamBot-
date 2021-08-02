@@ -25,5 +25,5 @@ I recomend using vcpkg on windows
 ## Compilation
 You need CMAKE and working compiler\
 Tested with:
-- gcc 10.0.2 on linux
+- gcc 11.1.0 on linux
 - msvc 19.28 on windows
