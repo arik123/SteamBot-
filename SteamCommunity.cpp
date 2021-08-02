@@ -19,6 +19,7 @@ void SteamCommunity::request(std::string endpoint, bool post,
                              std::string referer,
                              const std::function<void(http::response<http::string_body> &)> &callback) {
     // Set SNI Hostname (many hosts need this to handshake successfully)
+    
     if (!data.empty() && !post) {
         endpoint += '?';
         auto iter = data.begin();
@@ -31,38 +32,47 @@ void SteamCommunity::request(std::string endpoint, bool post,
             endpoint += '&';
         }
     } else if (!data.empty() && post) {
-        std::string formData;
         auto iter = data.begin();
+        std::string formData;
         while (true) {
-            formData += urlEncode(iter->first);
+            formData += urlEncode(iter->first, true);
             formData += '=';
-            formData += urlEncode(iter->second);
+            formData += urlEncode(iter->second, true);
             iter++;
             if (iter == data.end()) break;
             formData += '&';
         }
+        std::cout << formData << '\n';
         req_.body() = formData;
+        req_.set(http::field::content_type, "application/x-www-form-urlencoded");
     }
     // Set up an HTTP GET request message
     req_.method(post ? http::verb::post : http::verb::get);
     req_.target(endpoint.c_str());
     req_.set(http::field::host, host);
     req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    req_.set(http::field::accept, "*/*");
+    //req_.set(http::field::accept, "*/*");
     if (referer.length()) {
         req_.set(http::field::referer, referer);
     }
     //req_.insert()
     req_.version(11);
-    p_apiRequest = new WebRequest(ex, ctx, host, endpoint, req_, callback, [&]() { shutdown(); });
+    req_.prepare_payload();
+    auto p_apiRequest = new WebRequest(ex,
+                                       ctx,
+                                       host,
+                                       endpoint,
+                                       req_,
+                                       callback,
+                                       [](WebRequest * ptr){shutdown(ptr);});
     // Look up the domain name
-    resolver_.async_resolve(host, "443", [&](beast::error_code ec, const net::resolver::results_type &results) {
+    resolver_.async_resolve(host, "443", [p_apiRequest](beast::error_code ec, const net::resolver::results_type &results) {
         p_apiRequest->on_resolve(ec, results);
     });
 }
 
-void SteamCommunity::shutdown() {
-    delete this->p_apiRequest;
+void SteamCommunity::shutdown(WebRequest * ptr) {
+    delete ptr;
 }
 
 void SteamCommunity::getUserInventory(uint64_t steamid, uint32_t appID, uint32_t contextID,

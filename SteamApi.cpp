@@ -44,7 +44,7 @@ void SteamApi::request(const char *interface, const char *method, const char *ve
         endpoint += '?';
         auto iter = data.begin();
         while (true) {
-            endpoint += urlEncode(iter->first);
+            endpoint += urlEncode(iter->first, true);
             endpoint += '=';
             endpoint += urlEncode(iter->second);
             iter++;
@@ -58,16 +58,16 @@ void SteamApi::request(const char *interface, const char *method, const char *ve
     req_.set(http::field::host, host);
     req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     req_.set(http::field::accept, "*/*");
-    req_.version(10);
-    p_apiRequest = new WebRequest(ex, ctx, host, endpoint, req_, callback, [&]() {shutdown(); });
+    req_.version(11);
+    auto p_apiRequest = new WebRequest(ex, ctx, host, endpoint, req_, callback, [](WebRequest* ptr) {shutdown(ptr); });
     // Look up the domain name
-    resolver_.async_resolve(host, "443", [&](beast::error_code ec, const net::resolver::results_type& results) {p_apiRequest->on_resolve(ec, results); });
+    resolver_.async_resolve(host, "443", [p_apiRequest](beast::error_code ec, const net::resolver::results_type& results) {p_apiRequest->on_resolve(ec, results); });
 }
 
 SteamApi::SteamApi(const asio::any_io_executor &ex, ssl::context &ctx, std::string host)
         : resolver_(ex), ex(ex), ctx(ctx), host(std::move(host)) {
 }
 
-void SteamApi::shutdown() {
-    delete this->p_apiRequest;
+void SteamApi::shutdown(WebRequest * ptr) {
+    delete ptr;
 }

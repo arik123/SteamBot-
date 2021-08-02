@@ -3,6 +3,6 @@
 #include <string>
 #include <boost/beast/core.hpp>
 namespace beast = boost::beast;
-std::string urlEncode(const std::string& SRC);
+std::string urlEncode(const std::string& SRC, bool form = false);
 void fail(beast::error_code ec, char const *what);
 #endif

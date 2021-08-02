@@ -30,9 +30,8 @@ class SteamApi {
 	http::request<http::string_body> req_;
 	http::response<http::string_body> res_;
 	const std::string host;
-	WebRequest* p_apiRequest = nullptr;
 	
-	void shutdown();
+	static void shutdown(WebRequest * ptr);
 public:
 	SteamApi(const asio::any_io_executor& ex, ssl::context& ctx, std::string host);
 	// Start the asynchronous operation

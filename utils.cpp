@@ -1,6 +1,6 @@
 #include "utils.h"
 #include <iostream>
-std::string urlEncode(const std::string& SRC) {
+std::string urlEncode(const std::string& SRC, bool form) {
     std::string ret;
     ret.reserve(SRC.size());
     for (std::string::const_iterator iter = SRC.begin(); iter != SRC.end(); ++iter) {
@@ -11,7 +11,9 @@ std::string urlEncode(const std::string& SRC) {
             ret += c;
             continue;
         }
-
+        if(form && c == ' '){
+            ret+='+';
+        }
         // Any other characters are percent-encoded
         char buff[4];
         sprintf(buff, "%%%02X", c);

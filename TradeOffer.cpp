@@ -3,10 +3,12 @@
 //
 
 #include "TradeOffer.h"
+#include "consoleColor.h"
 
 #include <utility>
 #include <rapidjson/writer.h>
 #include <rapidjson/ostreamwrapper.h>
+#include "consoleColor.h"
 
 bool TradeOffer::send(SteamCommunity & community) {
     std::ostringstream offerParams;
@@ -63,20 +65,6 @@ bool TradeOffer::send(SteamCommunity & community) {
     rapidjson::Writer<rapidjson::OStreamWrapper> writer2(dataStream);
     data.Accept(writer2);
     std::cout << offerData.str() << '\n';
-    return false;
-    /*
-    "newversion": true,
-    "version": this.itemsToGive.length + this.itemsToReceive.length + 1,
-    "me": {
-        "assets": this.itemsToGive.map(itemMapper),
-                "currency": [],
-                "ready": false
-    },
-    "them": {
-        "assets": this.itemsToReceive.map(itemMapper),
-                "currency": [],
-                "ready": false
-    } */
     community.request("/tradeoffer/new/send", true, {
         {"sessionid", community.sessionToken},
         {"serverid", "1"},
@@ -87,15 +75,13 @@ bool TradeOffer::send(SteamCommunity & community) {
         {"trade_offer_create_params", offerParams.str()}
         //tradeofferid_countered
     }, referer.str(), [](http::response<http::string_body> &resp){
-
+        std::cout << color(colorFG::Green) << resp.body().c_str() << color();
     });
 
     return false;
 }
 
-TradeOffer::TradeOffer(uint64_t partner, std::string token) : partner(partner), token(std::move(token)) {
-
-}
+TradeOffer::TradeOffer(uint64_t partner, std::string token) : partner(partner), token(std::move(token)) {}
 
 void TradeOffer::addOurItem(TradeOffer::OfferAsset & item) {
     ourItems.push_back(item);

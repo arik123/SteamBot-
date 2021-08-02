@@ -389,17 +389,17 @@ int main(int argc, char** argv, char* envp[]) {
                 std::cout << "callback called in main\n";
             });
         } else if (message == "getItem") {
-            community->getUserInventory(mySteamID, 440, 2, [user](const std::vector<SteamCommunity::InventoryItem>& inv){
+            /*community->getUserInventory(mySteamID, 440, 2, [user](const std::vector<SteamCommunity::InventoryItem>& inv){
                 SteamCommunity::InventoryItem chosenItem;
                 for(const auto & item : inv) {
                     if(!item.tradable) continue;
                     chosenItem = item;
                     break;
-                }
+                }*/
                 TradeOffer offer(user.steamID64);
-                offer.addOurItem(chosenItem);
+                //offer.addOurItem(chosenItem);
                 offer.send(*community);
-            });
+            //});
         }
     };
 
