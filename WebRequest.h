@@ -25,8 +25,8 @@ struct WebRequest {
     bool ssl;
     http::request<http::string_body> req_;
     http::response<http::string_body> res_;
-    beast::tcp_stream stream_;
-    beast::tcp_stream * usedStream_;
+    //beast::tcp_stream stream_;
+    //beast::tcp_stream * usedStream_;
     beast::ssl_stream<beast::tcp_stream> sslStream_;
     beast::flat_buffer buffer_; // (Must persist between reads)
     const std::string host;

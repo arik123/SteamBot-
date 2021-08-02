@@ -52,8 +52,9 @@ void WebRequest::on_handshake(beast::error_code ec) {
     // Set a timeout on the operation
     beast::get_lowest_layer(sslStream_).expires_after(std::chrono::seconds(30));
 
-    // Send the HTTP request to the remote host
-    http::async_write(sslStream_, req_, [&](beast::error_code ec, std::size_t bt){on_write(ec, bt);});
+    // Send the HTTP request to the remote
+    if(ssl) http::async_write(sslStream_, req_, [&](beast::error_code ec, std::size_t bt){on_write(ec, bt);});
+    else http::async_write(beast::get_lowest_layer(sslStream_), req_, [&](beast::error_code ec, std::size_t bt){on_write(ec, bt);});
 }
 
 void WebRequest::on_connect(beast::error_code ec, const asio::ip::basic_endpoint<asio::ip::tcp> &) {
@@ -75,9 +76,6 @@ void WebRequest::on_resolve(beast::error_code ec,
             std::cerr << ec2.message() << "\n";
             return;
         }
-        usedStream_ = &beast::get_lowest_layer(sslStream_);
-    } else {
-        usedStream_ = &stream_;
     }
     // Set a timeout on the operation
     beast::get_lowest_layer(sslStream_).expires_after(std::chrono::seconds(30));
@@ -92,6 +90,6 @@ WebRequest::WebRequest(asio::any_io_executor ex, ssl::context &ctx, std::string 
                        std::function<void(http::response<http::string_body>&)>  callback,
                        std::function<void(WebRequest*)> shutdown_cb,
                        bool ssl)
-        : sslStream_(ex, ctx), stream_(ex), host(std::move(host)), endpoint(std::move(endpoint)), callback(std::move(callback)), shutdown_cb(std::move(shutdown_cb)), ssl(ssl){
+        : sslStream_(ex, ctx), host(std::move(host)), endpoint(std::move(endpoint)), callback(std::move(callback)), shutdown_cb(std::move(shutdown_cb)), ssl(ssl){
     req_ = std::move(req);
 }
