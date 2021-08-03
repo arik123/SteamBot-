@@ -1,7 +1,7 @@
 //
 // Created by Max on 23. 3. 2021.
 //
-
+#pragma once
 #ifndef STEAMBOT_STEAMAPI_H
 #define STEAMBOT_STEAMAPI_H
 #include <functional>
@@ -11,6 +11,7 @@
 #include <utility>
 #include <boost/beast/version.hpp>
 #include <boost/asio/strand.hpp>
+#include <variant>
 
 #include <boost/certify/https_verification.hpp>
 #include "WebRequest.h"
@@ -35,7 +36,7 @@ class SteamApi {
 public:
 	SteamApi(const asio::any_io_executor& ex, ssl::context& ctx, std::string host);
 	// Start the asynchronous operation
-	void request(char const* interface, char const* method, char const* version, bool post, const std::unordered_map<std::string, std::string>& data, const std::function<void(http::response<http::string_body>&)>& callback);
+	void request(char const* interface, char const* method, char const* version, bool post, const std::unordered_map<std::string, std::variant<std::string, std::vector<uint8_t>>>& data, const std::function<void(http::response<http::string_body>&)>& callback);
 	void GetCMList(const std::string& cellid, const std::function<void(std::vector<net::endpoint> serverList)>& callback);
 };
 

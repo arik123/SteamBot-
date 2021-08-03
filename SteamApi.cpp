@@ -31,7 +31,7 @@ void SteamApi::GetCMList(const std::string &cellid, const std::function<void(std
 }
 
 void SteamApi::request(const char *interface, const char *method, const char *version, bool post,
-                       const std::unordered_map <std::string, std::string> &data,
+                       const std::unordered_map <std::string, std::variant<std::string, std::vector<uint8_t>>> &data,
                        const std::function<void(http::response < http::string_body >&)> &callback) {
     // Set SNI Hostname (many hosts need this to handshake successfully)
     std::string endpoint = "/";
@@ -40,16 +40,27 @@ void SteamApi::request(const char *interface, const char *method, const char *ve
     endpoint += method;
     endpoint += '/';
     endpoint += version;
-    if (!data.empty() && !post) {
-        endpoint += '?';
+    if(!data.empty()){
         auto iter = data.begin();
+        std::string formData;
         while (true) {
-            endpoint += urlEncode(iter->first, true);
-            endpoint += '=';
-            endpoint += urlEncode(iter->second);
+            formData += urlEncode(iter->first);
+            formData += '=';
+            if(std::get_if<std::string>(&(iter->second))) {
+                formData += urlEncode(std::get<std::string>(iter->second));
+            } else {
+                formData += urlEncode(std::get<std::vector<uint8_t>>(iter->second));
+            }
             iter++;
             if (iter == data.end()) break;
-            endpoint += '&';
+            formData += '&';
+        }
+        if(post) {
+            req_.body() = formData;
+            req_.set(http::field::content_type, "application/x-www-form-urlencoded");
+        } else {
+            endpoint += '?';
+            endpoint += formData;
         }
     }
     // Set up an HTTP GET request message
@@ -59,6 +70,7 @@ void SteamApi::request(const char *interface, const char *method, const char *ve
     req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     req_.set(http::field::accept, "*/*");
     req_.version(11);
+    req_.prepare_payload();
     auto p_apiRequest = new WebRequest(ex, ctx, host, endpoint, req_, callback, [](WebRequest* ptr) {shutdown(ptr); });
     // Look up the domain name
     resolver_.async_resolve(host, "443", [p_apiRequest](beast::error_code ec, const net::resolver::results_type& results) {p_apiRequest->on_resolve(ec, results); });

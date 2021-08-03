@@ -15,6 +15,7 @@
 #include <boost/beast/http/message.hpp>
 
 #include <boost/certify/https_verification.hpp>
+#include <utility>
 
 #include <openssl/hmac.h>
 #include "rapidjson/document.h"
@@ -217,6 +218,7 @@ int main(int argc, char** argv, char* envp[]) {
         boost::certify::enable_native_https_server_verification(ctx);
 
         api = new SteamApi(asio::make_strand(ioc), ctx, "api.steampowered.com");
+        client.api = api; // set
         net::resolver resolver(ioc);
         sock = new net::socket(ioc);
         std::string cellid("0");
@@ -323,6 +325,7 @@ int main(int argc, char** argv, char* envp[]) {
 				{
 	                std::cout << "logged on!" << std::endl;
 	                mySteamID = steamID.steamID64;
+	                //client.webLogOn();
 	                client.SetPersona(Steam::EPersonaState::Online, "Some new name");
 		            
 	                    std::ofstream myfile("cellid.txt");
@@ -389,27 +392,32 @@ int main(int argc, char** argv, char* envp[]) {
                 std::cout << "callback called in main\n";
             });
         } else if (message == "getItem") {
-            /*community->getUserInventory(mySteamID, 440, 2, [user](const std::vector<SteamCommunity::InventoryItem>& inv){
+            community->getUserInventory(mySteamID, 440, 2, [user](const std::vector<SteamCommunity::InventoryItem>& inv){
                 SteamCommunity::InventoryItem chosenItem;
                 for(const auto & item : inv) {
                     if(!item.tradable) continue;
                     chosenItem = item;
                     break;
-                }*/
+                }
                 TradeOffer offer(user.steamID64);
-                //offer.addOurItem(chosenItem);
+                offer.addOurItem(chosenItem);
                 offer.send(*community);
-            //});
+            });
         }
     };
 
     client.onSessionToken = [](uint64_t tokenParam)
     {
-        community->sessionToken = std::to_string(tokenParam);
+        //TODO FIND IF USEFULL
 #ifdef _DEBUG
-        std::cout << "saved session token " << tokenParam << '\n';
+        std::cout << "recieved session token " << tokenParam << '\n';
 #endif
 
+    };
+
+    client.onWebSession = [](std::string token){
+        std::cout << color(colorFG::Green) << "Recieved web token: " << token <<'\n' << color();
+        community->sessionID = std::move(token);
     };
 	client.defaultHandler = emsgHandler;
     std::thread run([&]() {ioc.run(); });

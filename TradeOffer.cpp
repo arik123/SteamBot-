@@ -66,7 +66,7 @@ bool TradeOffer::send(SteamCommunity & community) {
     data.Accept(writer2);
     std::cout << offerData.str() << '\n';
     community.request("/tradeoffer/new/send", true, {
-        {"sessionid", community.sessionToken},
+        {"sessionid", community.sessionID},
         {"serverid", "1"},
         {"partner", std::to_string(partner)},
         {"tradeoffermessage", message},
@@ -75,7 +75,7 @@ bool TradeOffer::send(SteamCommunity & community) {
         {"trade_offer_create_params", offerParams.str()}
         //tradeofferid_countered
     }, referer.str(), [](http::response<http::string_body> &resp){
-        std::cout << color(colorFG::Green) << resp.body().c_str() << color();
+        std::cout << color(colorFG::Green) << "responded: " <<  resp.result_int() << '\n' << resp.body().c_str() << color();
     });
 
     return false;

@@ -11,6 +11,7 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <utility>
+#include <variant>
 #include <boost/beast/version.hpp>
 #include <boost/asio/strand.hpp>
 
@@ -34,7 +35,7 @@ class SteamCommunity {
 	const std::string host;
 	static void shutdown(WebRequest * ptr);
 public:
-    std::string sessionToken;
+    std::string sessionID;
     struct InventoryItem {
         uint32_t appid;
         uint32_t amount;
@@ -47,7 +48,7 @@ public:
         std::string name;
     };
 	SteamCommunity(const asio::any_io_executor& ex, ssl::context& ctx, std::string host);
-    void request(std::string endpoint, bool post, const std::unordered_map<std::string, std::string>& data, std::string referer, const std::function<void(http::response <boost::beast::http::string_body >&)>& callback);
+    void request(std::string endpoint, bool post, const std::unordered_map<std::string, std::variant<std::string, std::vector<uint8_t>>> &data, std::string referer, const std::function<void(http::response <boost::beast::http::string_body >&)>& callback);
 	void getUserInventory(uint64_t steamid, uint32_t appid, uint32_t contextID, const std::function<void(std::vector<InventoryItem>&)>& callback, const std::string& language = "english", const std::string& start = "");
 	void login();
 };

@@ -15,43 +15,41 @@ SteamCommunity::SteamCommunity(const asio::any_io_executor &ex, ssl::context &ct
 }
 
 void SteamCommunity::request(std::string endpoint, bool post,
-                             const std::unordered_map<std::string, std::string> &data,
+                             const std::unordered_map<std::string, std::variant<std::string, std::vector<uint8_t>>> &data,
                              std::string referer,
                              const std::function<void(http::response<http::string_body> &)> &callback) {
     // Set SNI Hostname (many hosts need this to handshake successfully)
-    
-    if (!data.empty() && !post) {
-        endpoint += '?';
-        auto iter = data.begin();
-        while (true) {
-            endpoint += urlEncode(iter->first);
-            endpoint += '=';
-            endpoint += urlEncode(iter->second);
-            iter++;
-            if (iter == data.end()) break;
-            endpoint += '&';
-        }
-    } else if (!data.empty() && post) {
+
+    if(!data.empty()){
         auto iter = data.begin();
         std::string formData;
         while (true) {
-            formData += urlEncode(iter->first, true);
+            formData += urlEncode(iter->first);
             formData += '=';
-            formData += urlEncode(iter->second, true);
+            if(std::get_if<std::string>(&(iter->second))) {
+                formData += urlEncode(std::get<std::string>(iter->second));
+            } else {
+                formData += urlEncode(std::get<std::vector<uint8_t>>(iter->second));
+            }
             iter++;
             if (iter == data.end()) break;
             formData += '&';
         }
-        std::cout << formData << '\n';
-        req_.body() = formData;
-        req_.set(http::field::content_type, "application/x-www-form-urlencoded");
+        if(post) {
+            req_.body() = formData;
+            req_.set(http::field::content_type, "application/x-www-form-urlencoded");
+        } else {
+            endpoint += '?';
+            endpoint += formData;
+        }
     }
     // Set up an HTTP GET request message
     req_.method(post ? http::verb::post : http::verb::get);
     req_.target(endpoint.c_str());
     req_.set(http::field::host, host);
     req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    //req_.set(http::field::accept, "*/*");
+    req_.set(http::field::accept, "*/*");
+    req_.prepare_payload();
     if (referer.length()) {
         req_.set(http::field::referer, referer);
     }
@@ -84,7 +82,7 @@ void SteamCommunity::getUserInventory(uint64_t steamid, uint32_t appID, uint32_t
     endpoint += std::to_string(appID);
     endpoint += '/';
     endpoint += std::to_string(contextID);
-    std::unordered_map<std::string, std::string> params = {{"l", language},
+    std::unordered_map<std::string, std::variant<std::string, std::vector<uint8_t>>> params = {{"l", language},
                                                            {"count", "5000"}};
     if (start.length()) {
         params.insert({"start_assetid", start});
