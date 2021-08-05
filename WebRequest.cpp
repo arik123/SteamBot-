@@ -19,7 +19,11 @@ void WebRequest::on_read(beast::error_code ec, std::size_t bytes_transferred) {
     beast::get_lowest_layer(sslStream_).expires_after(std::chrono::seconds(30));
 
     // Gracefully close the stream
-    sslStream_.async_shutdown([&](beast::error_code ec){on_shutdown(ec);});
+    if(ssl) sslStream_.async_shutdown([&](beast::error_code ec){on_shutdown(ec);});
+    else {
+        beast::get_lowest_layer(sslStream_).release_socket(); // is it needed ?
+        shutdown_cb(this);
+    }
 }
 
 void WebRequest::on_shutdown(beast::error_code ec) {
@@ -42,7 +46,8 @@ void WebRequest::on_write(beast::error_code ec, std::size_t bytes_transferred) {
         return fail(ec, "write");
 
     // Receive the HTTP response
-    http::async_read(sslStream_, buffer_, res_, [&](beast::error_code ec, std::size_t bt){on_read(ec, bt);});
+    if(ssl) http::async_read(sslStream_, buffer_, res_, [&](beast::error_code ec, std::size_t bt){on_read(ec, bt);});
+    else    http::async_read(beast::get_lowest_layer(sslStream_), buffer_, res_, [&](beast::error_code ec, std::size_t bt){on_read(ec, bt);});
 }
 
 void WebRequest::on_handshake(beast::error_code ec) {

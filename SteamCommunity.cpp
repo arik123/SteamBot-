@@ -43,6 +43,15 @@ void SteamCommunity::request(std::string endpoint, bool post,
             endpoint += formData;
         }
     }
+    if(!cookies.empty()){
+        std::string cs;
+        for(const auto & cookie : cookies){
+            if(!cs.empty()) cs += "; ";
+             cs += cookie;
+        }
+        std::cout << cs << std::endl;
+        req_.set(http::field::cookie, cs);
+    }
     // Set up an HTTP GET request message
     req_.method(post ? http::verb::post : http::verb::get);
     req_.target(endpoint.c_str());
@@ -62,7 +71,7 @@ void SteamCommunity::request(std::string endpoint, bool post,
                                        endpoint,
                                        req_,
                                        callback,
-                                       [](WebRequest * ptr){shutdown(ptr);});
+                                       [](WebRequest * ptr){shutdown(ptr);}, true);
     // Look up the domain name
     resolver_.async_resolve(host, "443", [p_apiRequest](beast::error_code ec, const net::resolver::results_type &results) {
         p_apiRequest->on_resolve(ec, results);
@@ -93,7 +102,8 @@ void SteamCommunity::getUserInventory(uint64_t steamid, uint32_t appID, uint32_t
             [callback](http::response<http::string_body> &resp) {
                 std::vector<InventoryItem> inventory;
                 std::cout << "inventory responded\n";
-                if (resp[http::field::content_type].starts_with("application/json")) {
+                std::cout << resp.body().data() << std::endl;
+                if (resp.result_int() == 200 && resp[http::field::content_type].starts_with("application/json")) {
                     //TODO handle more than 5000 items
                     rapidjson::Document document;
                     document.Parse(resp.body().data());

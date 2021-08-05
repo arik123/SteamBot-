@@ -1,0 +1,11 @@
+POST /ISteamUserAuth/AuthenticateUser/v0001/ HTTP/1.1
+Accept: text/html,*/*;q=0.9
+Accept-Encoding: gzip,identity,*;q=0
+Accept-Charset: ISO-8859-1,utf-8,*;q=0.7
+User-Agent: Valve/Steam HTTP Client 1.0
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 596
+Host: dump.roboparts.tf
+Connection: close
+
+steamid=76561199057848043&sessionkey=%55%27%c0%48%51%18%e1%01%63%62%0e%b3%20%b9%a5%bd%cd%5b%31%54%32%e3%7a%06%51%bb%a1%ab%6f%81%44%a3%98%7f%00%94%93%84%2c%84%75%09%25%42%c3%74%e2%70%97%98%07%76%39%9b%45%73%77%e7%16%da%c2%50%b0%fa%63%47%a7%00%1e%5a%8f%c7%3f%13%34%2f%fe%f7%06%88%4e%2e%35%5b%d3%9b%b5%53%50%4a%55%89%56%61%f0%89%4c%df%03%1b%d3%5e%91%2e%e4%57%5d%56%9c%62%cf%9c%b8%c9%1d%c9%03%27%c5%c1%5b%ca%ce%52%0f%fc%72%e8&encrypted_loginkey=%4f%20%dc%dd%58%5c%3e%7b%9a%c8%4b%b4%62%25%54%b0%44%be%ea%ae%b7%c3%10%28%d9%3f%12%e8%80%0a%43%b5%e8%06%b2%0f%53%de%86%6f%fa%a4%07%41%a1%08%aa%56&format=vdf

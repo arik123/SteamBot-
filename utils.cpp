@@ -14,7 +14,7 @@ std::string urlEncode(const std::string& SRC) {
         }
         // Any other characters are percent-encoded
         char buff[4];
-        sprintf(buff, "%%%02X", c);
+        sprintf(buff, "%%%02x", c);
         ret += buff;
     }
     return ret;
@@ -25,7 +25,7 @@ std::string urlEncode(const std::vector<uint8_t>& SRC) {
     for (auto iter = SRC.begin(); iter != SRC.end(); ++iter) {
         uint8_t c = (*iter);
         char buff[4];
-        sprintf(buff, "%%%02X", c);
+        sprintf(buff, "%%%02x", c);
         ret += buff;
     }
     return ret;

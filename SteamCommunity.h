@@ -36,6 +36,7 @@ class SteamCommunity {
 	static void shutdown(WebRequest * ptr);
 public:
     std::string sessionID;
+    std::vector<std::string> cookies;
     struct InventoryItem {
         uint32_t appid;
         uint32_t amount;

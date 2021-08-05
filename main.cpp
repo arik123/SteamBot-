@@ -198,7 +198,7 @@ int main(int argc, char** argv, char* envp[]) {
 //        std::this_thread::sleep_for(std::chrono::seconds(1));
 //    }
     setupConsole();
-    std::cout << color(colorFG::Green) << "Starting" << color();
+    std::cout << color(colorFG::Green) << "Starting" << color() << '\n';
     auto env = loadenv(envp);
     std::ifstream sentryIF("sentry.txt");
     std::string sentry;
@@ -217,8 +217,9 @@ int main(int argc, char** argv, char* envp[]) {
         ctx.set_default_verify_paths();
         boost::certify::enable_native_https_server_verification(ctx);
 
-        api = new SteamApi(asio::make_strand(ioc), ctx, "api.steampowered.com");
-        client.api = api; // set
+        api = new SteamApi(asio::make_strand(ioc), ctx, "api.steampowered.com", env.at("STEAM_API_KEY"));
+        //auto api2 = new SteamApi(asio::make_strand(ioc), ctx, "dump.roboparts.tf", env.at("STEAM_API_KEY")); //TODO REMOVE
+        client.api = api;//api2; // set
         net::resolver resolver(ioc);
         sock = new net::socket(ioc);
         std::string cellid("0");
@@ -415,9 +416,9 @@ int main(int argc, char** argv, char* envp[]) {
 
     };
 
-    client.onWebSession = [](std::string token){
-        std::cout << color(colorFG::Green) << "Recieved web token: " << token <<'\n' << color();
-        community->sessionID = std::move(token);
+    client.onWebSession = [](std::vector<std::string> & cookies, std::string & sessionID){
+        community->cookies = cookies;
+        community->sessionID = sessionID;
     };
 	client.defaultHandler = emsgHandler;
     std::thread run([&]() {ioc.run(); });
