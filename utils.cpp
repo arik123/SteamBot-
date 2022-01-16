@@ -33,3 +33,25 @@ std::string urlEncode(const std::vector<uint8_t>& SRC) {
 void fail(beast::error_code ec, char const *what){
 std::cerr << what << ": " << ec.message() << "\n";
 }
+
+
+std::ostringstream printHttpMessage(beast::http::request<beast::http::string_body> & msg) {
+    std::ostringstream o;
+    auto fields = msg.base();
+    o << "Request\n";
+    for (const auto &field: fields) {
+        o << field.name_string() << ": " << field.value() << '\n';
+    }
+    o << msg.body().data() << '\n';
+    return o;
+}
+std::ostringstream printHttpMessage(beast::http::response<beast::http::string_body> & msg) {
+    std::ostringstream o;
+    auto fields = msg.base();
+    o << "Response\n";
+    for (const auto &field: fields) {
+        o << field.name_string() << ": " << field.value() << '\n';
+    }
+    o << msg.body().data() << '\n';
+    return o;
+}

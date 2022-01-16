@@ -6,13 +6,15 @@
 
 #include <utility>
 #include "utils.h"
+#include "consoleColor.h"
 
 void WebRequest::on_read(beast::error_code ec, std::size_t bytes_transferred) {
     boost::ignore_unused(bytes_transferred);
 
     if (ec)
         return fail(ec, "read");
-
+    auto fields = req_.base();
+    std::cout << color(colorFG::Bright_Blue) << printHttpMessage(req_).str() << printHttpMessage(res_).str() << color(colorFG::Default) << std::endl;
     callback(res_);
 
     // Set a timeout on the operation
