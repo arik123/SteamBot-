@@ -39,6 +39,7 @@ std::ostringstream printHttpMessage(beast::http::request<beast::http::string_bod
     std::ostringstream o;
     auto fields = msg.base();
     o << "Request\n";
+    o << msg.method() << " " << msg.target() << '\n';
     for (const auto &field: fields) {
         o << field.name_string() << ": " << field.value() << '\n';
     }
@@ -48,10 +49,10 @@ std::ostringstream printHttpMessage(beast::http::request<beast::http::string_bod
 std::ostringstream printHttpMessage(beast::http::response<beast::http::string_body> & msg) {
     std::ostringstream o;
     auto fields = msg.base();
-    o << "Response\n";
+    o << "Response: " << msg.result_int() << " " << msg.result() << "\n";
     for (const auto &field: fields) {
         o << field.name_string() << ": " << field.value() << '\n';
     }
-    o << msg.body().data() << '\n';
+    //o << msg.body().data() << '\n';
     return o;
 }

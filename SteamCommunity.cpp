@@ -53,10 +53,11 @@ void SteamCommunity::request(std::string endpoint, bool post,
         req_.set(http::field::cookie, cs);
     }
     // Set up an HTTP GET request message
+    req_.set(http::field::user_agent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36");
     req_.method(post ? http::verb::post : http::verb::get);
     req_.target(endpoint.c_str());
     req_.set(http::field::host, host);
-    req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    //req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     req_.set(http::field::accept, "*/*");
     req_.prepare_payload();
     if (referer.length()) {
@@ -102,7 +103,6 @@ void SteamCommunity::getUserInventory(uint64_t steamid, uint32_t appID, uint32_t
             [callback](http::response<http::string_body> &resp) {
                 std::vector<InventoryItem> inventory;
                 std::cout << "inventory responded\n";
-                std::cout << resp.body().data() << std::endl;
                 if (resp.result_int() == 200 && resp[http::field::content_type].starts_with("application/json")) {
                     //TODO handle more than 5000 items
                     rapidjson::Document document;

@@ -59,7 +59,6 @@ struct color {
     color(colorFG fgc, colorBG bgc) : fg(fgc), bg(bgc) {};
     color() : fg(colorFG::Default), bg(colorBG::Default) {};
 };
-//TODO: REMOVE inline and do it properly
 
 std::ostream& operator<<(std::ostream& os, const color& color);
 #endif //STEAMBOT_CONSOLECOLOR_H
