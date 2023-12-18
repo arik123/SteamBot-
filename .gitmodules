@@ -1,0 +1,6 @@
+[submodule "lib/certify"]
+	path = lib/certify
+	url = https://github.com/djarek/certify.git
+[submodule "lib/SteamPP"]
+	path = lib/SteamPP
+	url = git@github.com:arik123/SteamPP.git

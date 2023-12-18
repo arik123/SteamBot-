@@ -1,5 +1,7 @@
 cmake-build-*
 out
+build
 .vs
 .env
 .idea
+vcpkg_installed

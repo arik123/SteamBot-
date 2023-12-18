@@ -22,8 +22,6 @@ bool emsgHandler(Steam::EMsg emsg, const unsigned char *data, size_t length, uin
                 std::cout << color(colorFG::Red) << "Credential change requires code\n" << color();
             if (info.password_or_secretqa_change_requires_code())
                 std::cout << color(colorFG::Red) << "Password or secretqa change requires code\n" << color();
-            if (info.remind_user_about_email())
-                std::cout << color(colorFG::Red) << "User must be reminded about email\n" << color();
             return true;
         }
         case Steam::EMsg::ClientLicenseList: {
