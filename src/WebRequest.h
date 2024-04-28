@@ -13,8 +13,8 @@
 #include <boost/beast/version.hpp>
 #include <boost/asio/strand.hpp>
 
-#include <boost/certify/extensions.hpp>
-#include <boost/certify/https_verification.hpp>
+#include "boost/certify/extensions.hpp"
+#include "boost/certify/https_verification.hpp"
 
 namespace asio = boost::asio;    // from <boost/asio.hpp>
 namespace beast = boost::beast;         // from <boost/beast.hpp>
