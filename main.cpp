@@ -2,6 +2,7 @@
 #include <fstream>
 #include <functional>
 #include <thread>
+#include <span>
 
 #include "lib/SteamPP/steam++.h"
 
@@ -14,7 +15,6 @@
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/beast/http/message.hpp>
 
-#include <boost/certify/https_verification.hpp>
 #include <utility>
 
 #include <openssl/hmac.h>
@@ -191,34 +191,21 @@ int setupConsole() {
 }
 SteamApi * api;
 SteamCommunity * community;
-int main(int argc, char** argv, char* envp[]) {
-//    while(true) {
-//        std::string code = generateAuthCode("");
-//        std::cout << code << '\n';
-//        std::this_thread::sleep_for(std::chrono::seconds(1));
-//    }
+int main(const int argc, const char** const argv, char* envp[]) {
     setupConsole();
+    const auto env = loadenv(envp);
     std::cout << color(colorFG::Green) << "Starting" << color() << '\n';
-    auto env = loadenv(envp);
     std::ifstream sentryIF("sentry.txt");
     std::string sentry;
-    uint64_t token = 0;
     if (sentryIF.is_open())
     {
         sentryIF >> sentry;
         sentryIF.close();
     }
-    ssl::context ctx(ssl::context::tlsv12_client);
+
     try
     {
-        // This holds the root certificate used for verification
-        ctx.set_verify_mode(ssl::context::verify_peer |
-            ssl::context::verify_fail_if_no_peer_cert);
-        ctx.set_default_verify_paths();
-        boost::certify::enable_native_https_server_verification(ctx);
-
-        api = new SteamApi(asio::make_strand(ioc), ctx, "api.steampowered.com", env.at("STEAM_API_KEY"));
-        //auto api2 = new SteamApi(asio::make_strand(ioc), ctx, "dump.roboparts.tf", env.at("STEAM_API_KEY")); //TODO REMOVE
+        api = new SteamApi(asio::make_strand(ioc), env.at("STEAM_API_KEY"));
         client.api = api;//api2; // set
         net::resolver resolver(ioc);
         sock = new net::socket(ioc);
@@ -295,7 +282,7 @@ int main(int argc, char** argv, char* envp[]) {
         return EXIT_FAILURE;
     }
 
-    community = new SteamCommunity(asio::make_strand(ioc), ctx, "steamcommunity.com");
+    community = new SteamCommunity(asio::make_strand(ioc));
 
     client.onHandshake = [&] {
         std::cout << "logging in \n";

@@ -29,11 +29,11 @@ struct WebRequest {
     //beast::tcp_stream * usedStream_;
     beast::ssl_stream<beast::tcp_stream> sslStream_;
     beast::flat_buffer buffer_; // (Must persist between reads)
-    const std::string host;
-    std::string endpoint;
+    const std::string_view host;
+    std::string_view endpoint;
     const std::function<void(http::response<http::string_body>&)> callback;
     std::function<void(WebRequest*)> shutdown_cb;
-    WebRequest(asio::any_io_executor ex, ssl::context& ctx, std::string host, std::string endpoint, http::request<http::string_body> req, std::function<void(http::response<http::string_body>&)>   callback, std::function<void(WebRequest*)> shutdown_cb, bool ssl = true);
+    WebRequest(asio::any_io_executor ex, ssl::context& ctx, std::string_view host, std::string_view endpoint, http::request<http::string_body> req, std::function<void(http::response<http::string_body>&)>   callback, std::function<void(WebRequest*)> shutdown_cb, bool ssl = true);
 
     void on_resolve(beast::error_code ec, const net::resolver::results_type& results);
 

@@ -8,6 +8,8 @@
 #include <cryptopp/gzip.h>
 #include <utility>
 #include "utils.h"
+#include <boost/asio.hpp>
+#include <boost/certify/https_verification.hpp>
 
 void SteamApi::GetCMList(const std::string &cellid, const std::function<void(std::vector < net::endpoint > )> &callback) {
     request("ISteamDirectory", "GetCMList", "v1", false,
@@ -99,8 +101,13 @@ void SteamApi::request(const char *interface, const char *method, const char *ve
     resolver_.async_resolve(host, "443", [p_apiRequest](beast::error_code ec, const net::resolver::results_type& results) {p_apiRequest->on_resolve(ec, results); });
 }
 
-SteamApi::SteamApi(const asio::any_io_executor &ex, ssl::context &ctx, std::string host, std::string apiKey)
-        : resolver_(ex), ex(ex), ctx(ctx), host(std::move(host)), apiKey(std::move(std::move(apiKey))) {
+SteamApi::SteamApi(const asio::any_io_executor &ex, std::string apiKey)
+        : resolver_(ex), ex(ex), apiKey(std::move(std::move(apiKey))), ctx(ssl::context::tlsv12_client) {
+    // This holds the root certificate used for verification
+    ctx.set_verify_mode(ssl::context::verify_peer |
+                        ssl::context::verify_fail_if_no_peer_cert);
+    ctx.set_default_verify_paths();
+    boost::certify::enable_native_https_server_verification(ctx); //FIXME: deprecated
 }
 
 void SteamApi::shutdown(WebRequest * ptr) {

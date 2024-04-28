@@ -10,8 +10,15 @@
 
 #undef _DEBUG_JSON
 
-SteamCommunity::SteamCommunity(const asio::any_io_executor &ex, ssl::context &ctx, std::string host)
-        : resolver_(ex), ex(ex), ctx(ctx), host(std::move(host)) {
+SteamCommunity::SteamCommunity(const asio::any_io_executor &ex)
+        : resolver_(ex), ex(ex), ctx(ssl::context::tlsv12_client) {
+    //TODO: duplicate
+
+    // This holds the root certificate used for verification
+    ctx.set_verify_mode(ssl::context::verify_peer |
+                        ssl::context::verify_fail_if_no_peer_cert);
+    ctx.set_default_verify_paths();
+    boost::certify::enable_native_https_server_verification(ctx); //FIXME: deprecated
 }
 
 void SteamCommunity::request(std::string endpoint, bool post,

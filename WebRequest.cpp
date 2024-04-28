@@ -78,7 +78,7 @@ void WebRequest::on_resolve(beast::error_code ec,
     if (ec)
         return fail(ec, "resolve");
     if(ssl){
-        if (!SSL_set_tlsext_host_name(sslStream_.native_handle(), host.c_str())) {
+        if (!SSL_set_tlsext_host_name(sslStream_.native_handle(), host.data())) {
             beast::error_code ec2{static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category()};
             std::cerr << ec2.message() << "\n";
             return;
@@ -92,11 +92,11 @@ void WebRequest::on_resolve(beast::error_code ec,
                                                       [&](beast::error_code ec, const net::resolver::results_type::endpoint_type& et){on_connect(ec, et);});
 }
 
-WebRequest::WebRequest(asio::any_io_executor ex, ssl::context &ctx, std::string host, std::string endpoint,
+WebRequest::WebRequest(asio::any_io_executor ex, ssl::context &ctx, std::string_view host, std::string_view endpoint,
                        http::request<http::string_body> req,
                        std::function<void(http::response<http::string_body>&)>  callback,
                        std::function<void(WebRequest*)> shutdown_cb,
                        bool ssl)
-        : sslStream_(ex, ctx), host(std::move(host)), endpoint(std::move(endpoint)), callback(std::move(callback)), shutdown_cb(std::move(shutdown_cb)), ssl(ssl){
+        : sslStream_(ex, ctx), host(host), endpoint(endpoint), callback(std::move(callback)), shutdown_cb(std::move(shutdown_cb)), ssl(ssl){
     req_ = std::move(req);
 }

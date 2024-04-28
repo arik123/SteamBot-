@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 project(SteamBot)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_compile_definitions(_DEBUG)
@@ -16,7 +16,7 @@ find_package(OpenSSL REQUIRED)
 find_package(Boost 1.75.0 REQUIRED)
 find_package(RapidJSON REQUIRED)
 
-add_executable(SteamBot main.cpp SteamApi.cpp WebRequest.cpp utils.cpp SteamCommunity.cpp CustomEMsgHandler.cpp consoleColor.cpp TradeOffer.cpp TradeOffer.h)
+add_executable(SteamBot main.cpp SteamApi.cpp WebRequest.cpp utils.cpp SteamCommunity.cpp CustomEMsgHandler.cpp consoleColor.cpp TradeOffer.cpp)
 
 add_subdirectory(lib/SteamPP)
 
