@@ -3,7 +3,7 @@
 //
 
 #include "SteamCommunity.h"
-#include "utils.h"
+#include "../lib/SteamPP/include/utils.h"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/writer.h"
 #include "consoleColor.h"

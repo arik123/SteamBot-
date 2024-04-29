@@ -16,7 +16,7 @@
 #include <boost/asio/strand.hpp>
 
 #include "boost/certify/https_verification.hpp"
-#include "WebRequest.h"
+#include "../lib/SteamPP/include/WebRequest.h"
 #include "rapidjson/document.h"
 
 namespace asio = boost::asio;    // from <boost/asio.hpp>
