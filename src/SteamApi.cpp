@@ -13,7 +13,7 @@
 
 void SteamApi::GetCMList(const std::string &cellid, const std::function<void(std::vector < net::endpoint > )> &callback) {
     request("ISteamDirectory", "GetCMList", "v1", false,
-            { {"cellid", cellid} },
+            { {"cellid", cellid}, {"maxcount", "5"} },
             [=](http::response<http::string_body>& resp) {
                 if (resp[http::field::content_type].starts_with("application/json"))
                 {

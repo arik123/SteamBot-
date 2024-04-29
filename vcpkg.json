@@ -5,7 +5,7 @@
     "protobuf",
     "boost-asio",
     "boost-beast",
-    "libarchive",
+    "zlib",
     "rapidjson",
     { "name": "protobuf", "host": true }
   ]
