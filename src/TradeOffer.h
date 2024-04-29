@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "SteamCommunity.h"
+#include "../lib/SteamPP/include/SteamCommunity.h"
 
 class TradeOffer {
 public:

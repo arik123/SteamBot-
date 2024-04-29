@@ -9,8 +9,8 @@
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
-#include "SteamApi.h"
-#include "SteamCommunity.h"
+#include "../lib/SteamPP/include/SteamApi.h"
+#include "../lib/SteamPP/include/SteamCommunity.h"
 
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/beast/http/message.hpp>
@@ -19,7 +19,7 @@
 
 #include <openssl/hmac.h>
 #include "rapidjson/document.h"
-#include "SteamApi.h"
+#include "../lib/SteamPP/include/SteamApi.h"
 #include "consoleColor.h"
 #include "CustomEMsgHandler.h"
 #include "TradeOffer.h"
