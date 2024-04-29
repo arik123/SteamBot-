@@ -3,12 +3,12 @@
 //
 
 #include "TradeOffer.h"
-#include "consoleColor.h"
+#include "../lib/SteamPP/include/consoleColor.h"
 
 #include <utility>
 #include <rapidjson/writer.h>
 #include <rapidjson/ostreamwrapper.h>
-#include "consoleColor.h"
+#include "../lib/SteamPP/include/consoleColor.h"
 
 bool TradeOffer::send(SteamCommunity & community) {
     std::ostringstream offerParams;

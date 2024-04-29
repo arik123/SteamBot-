@@ -5,6 +5,7 @@
 #include <span>
 
 #include "../lib/SteamPP/include/steam++.h"
+#include "../lib/SteamPP/include/utils.h"
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -12,15 +13,13 @@
 #include "../lib/SteamPP/include/SteamApi.h"
 #include "../lib/SteamPP/include/SteamCommunity.h"
 
-#include <boost/beast/core/detail/base64.hpp>
 #include <boost/beast/http/message.hpp>
 
 #include <utility>
 
-#include <openssl/hmac.h>
 #include "rapidjson/document.h"
 #include "../lib/SteamPP/include/SteamApi.h"
-#include "consoleColor.h"
+#include "../lib/SteamPP/include/consoleColor.h"
 #include "CustomEMsgHandler.h"
 #include "TradeOffer.h"
 
@@ -72,42 +71,6 @@ Steam::SteamClient client(
             }, callback_heap, timeout);
         }
 );
-bool isLittleEndian()
-{
-    short int number = 0x1;
-    char *numPtr = (char*)&number;
-    return (numPtr[0] == 1);
-}
-
-std::string generateAuthCode(const std::string &secret) {
-    using namespace boost::beast::detail;
-    std::vector<uint8_t> decoded;
-    decoded.resize(base64::decoded_size(secret.size()));
-    base64::decode(decoded.data(), secret.c_str(), secret.size());
-    std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
-    std::chrono::system_clock::duration dtn = tp.time_since_epoch();
-    uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(dtn).count();
-    now /= 1000;
-    now /= 30;
-    if(isLittleEndian()) {
-        /* swap the bytes */
-        now = ((now&0xFF)<<56) | (((now>>8)&0xFF)<<48) |   (((now>>16)&0xFF)<<40) | (((now>>24)&0xFF)<<32) | (((now>>32)&0xFF)<<24) | (((now>>40)&0xFF)<<16) |   (((now>>48)&0xFF)<<8) | (((now>>56)&0xFF));
-    }
-    std::vector<uint8_t> out (EVP_MAX_MD_SIZE);
-    uint32_t md_size;
-    HMAC(EVP_sha1(), decoded.data(), decoded.size()-1, reinterpret_cast<uint8_t*>(&now), sizeof (now), out.data(), &md_size);
-    out.resize(md_size);
-    uint32_t partBuff = *reinterpret_cast<uint32_t *>(out.data() + (out[19] & 0xf));
-    int b = out[19] & 0xF;
-    int codePoint = (out[b] & 0x7F) << 24 | (out[b + 1] & 0xFF) << 16 | (out[b + 2] & 0xFF) << 8 | (out[b + 3] & 0xFF);
-    const char * chars = "23456789BCDFGHJKMNPQRTVWXY";
-    std::string code;
-    for (int i = 0; i < 5; i++) {
-        code += chars[codePoint % strlen(chars)];
-        codePoint /= strlen(chars);
-    }
-    return code;
-}
 
 std::unordered_map<std::string, std::string> loadenv(char * envp[]) {
     std::unordered_map<std::string, std::string> env;
@@ -137,58 +100,7 @@ std::unordered_map<std::string, std::string> loadenv(char * envp[]) {
     dotEnv.close();
     return env;
 }
-int setupConsole() {
-    std::ios::sync_with_stdio(true);
-#ifdef WIN32
-    // https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences#samples
-    // Set output mode to handle virtual terminal sequences
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
-    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-    if (hIn == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
 
-    DWORD dwOriginalOutMode = 0;
-    DWORD dwOriginalInMode = 0;
-    if (!GetConsoleMode(hOut, &dwOriginalOutMode))
-    {
-        return false;
-    }
-    if (!GetConsoleMode(hIn, &dwOriginalInMode))
-    {
-        return false;
-    }
-
-    DWORD dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
-    DWORD dwRequestedInModes = ENABLE_VIRTUAL_TERMINAL_INPUT;
-
-    DWORD dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
-    if (!SetConsoleMode(hOut, dwOutMode))
-    {
-        // we failed to set both modes, try to step down mode gracefully.
-        dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-        dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
-        if (!SetConsoleMode(hOut, dwOutMode))
-        {
-            // Failed to set any VT mode, can't do anything here.
-            return -1;
-        }
-    }
-
-    DWORD dwInMode = dwOriginalInMode | ENABLE_VIRTUAL_TERMINAL_INPUT;
-    if (!SetConsoleMode(hIn, dwInMode))
-    {
-        // Failed to set VT input mode, can't do anything here.
-        return -1;
-    }
-#endif
-    return 0;
-}
 SteamApi * api;
 SteamCommunity * community;
 int main(const int argc, const char** const argv, char* envp[]) {

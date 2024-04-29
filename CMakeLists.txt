@@ -16,7 +16,7 @@ find_package(OpenSSL REQUIRED)
 find_package(Boost 1.84.0 REQUIRED)
 find_package(RapidJSON REQUIRED)
 
-add_executable(SteamBot src/main.cpp src/CustomEMsgHandler.cpp src/consoleColor.cpp src/TradeOffer.cpp)
+add_executable(SteamBot src/main.cpp src/CustomEMsgHandler.cpp src/TradeOffer.cpp)
 
 add_subdirectory(lib/SteamPP)
 
