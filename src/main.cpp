@@ -31,13 +31,13 @@ namespace http = boost::beast::http;
 
 std::string read_buffer;
 std::string write_buffer;
-net::socket * sock;
 std::thread steamPoller;
 asio::io_context ioc;
 rapidjson::Document document;
 
 bool running = true;
 
+/*
 void readHandle(boost::system::error_code error, std::size_t bytes_transferred){
     if (!error)
         read_buffer.resize(client.readable(reinterpret_cast<const unsigned char*>(read_buffer.data())));
@@ -45,9 +45,8 @@ void readHandle(boost::system::error_code error, std::size_t bytes_transferred){
 };
 void writeHandle(boost::system::error_code error, std::size_t bytes_transferred){
 }
+*/
 
-
-SteamApi * api;
 SteamCommunity * community;
 int main(const int argc, const char** const argv, char* envp[]) {
     const auto env = Environment(envp);
@@ -79,17 +78,11 @@ int main(const int argc, const char** const argv, char* envp[]) {
 
     try
     {
-        sock = new net::socket(ioc);
-
-
-        
-        
-
-        sock->async_read_some(asio::buffer(read_buffer.data(), read_buffer.size()), readHandle);
+        /*sock = new net::socket(ioc);
+        sock->async_read_some(asio::buffer(read_buffer.data(), read_buffer.size()), readHandle);*/
     }
     catch (std::exception const& e)
     {
-        delete api;
         std::cerr << "Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
@@ -99,9 +92,7 @@ int main(const int argc, const char** const argv, char* envp[]) {
     client.onHandshake = [&] {
         std::cout << "logging in \n";
         std::string code = generateAuthCode(env.get("STEAM_SHARED_SECRET"));
-        const uint8_t* p_sentry = (sentry.length() > 0) ? reinterpret_cast<const uint8_t *>(sentry.c_str()) : nullptr;
-        if(p_sentry != nullptr) std::cout << "using sentry\n";
-        client.LogOn(env.get("STEAM_USERNAME").c_str(), env.get("STEAM_PASSWORD").c_str(), p_sentry, code.data());
+        client.LogOn(env.get("STEAM_USERNAME").c_str(), env.get("STEAM_PASSWORD").c_str(), code.data());
     };
     client.onRelationships = [](bool incremental, std::map<Steam::SteamID, Steam::EFriendRelationship> &users, std::map<Steam::SteamID, Steam::EClanRelationship> &groups){
         std::cout << "a\n";
@@ -119,7 +110,7 @@ int main(const int argc, const char** const argv, char* envp[]) {
         myfile.close();
     };
     uint64_t mySteamID;
-    client.onLogOn = [&mySteamID](Steam::EResult result, Steam::SteamID steamID, uint32_t cellid) {
+    client.onLogOn = [&](Steam::EResult result, Steam::SteamID steamID, uint32_t cellid) {
         switch(result) {
             case Steam::EResult::OK:
 				{
@@ -172,7 +163,7 @@ int main(const int argc, const char** const argv, char* envp[]) {
         if (message == "ping") {
             client.SendPrivateMessage(user, "pong");
         } else if(message == "fetch") {
-            api->request("ISteamDirectory", "GetCMList", "v1", false,
+            client.api.request("ISteamDirectory", "GetCMList", "v1", false,
             {{"cellid", "0"}},
             [&, user](http::response<http::string_body> resp){
 
@@ -180,7 +171,7 @@ int main(const int argc, const char** const argv, char* envp[]) {
 		            client.SendPrivateMessage(user, "success ?");
             });
         } else if (message == "myinv") {
-            community->getUserInventory(user.steamID64, 440, 2, [user](const std::vector<SteamCommunity::InventoryItem>& inv ){
+            community->getUserInventory(user.steamID64, 440, 2, [&, user](const std::vector<SteamCommunity::InventoryItem>& inv ){
                 std::string message = "your inventory contains ";
                 message += std::to_string(inv.size());
                 message += " items";
@@ -227,6 +218,4 @@ int main(const int argc, const char** const argv, char* envp[]) {
     if(steamPoller.joinable())
         steamPoller.join();
     run.join();
-    delete api;
-    delete sock;
 }
